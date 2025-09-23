@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: raghuram2006
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app_net
+
+  backend:
+    build: ./backend
+    container_name: spring-backend
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/mydb?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: raghuram2006
+      SERVER_PORT: 8081
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app_net
+
+  frontend:
+    container_name: react-frontend
+    build:
+      context: .
+      args:
+        VITE_API_URL: http://localhost:8081
+        VITE_BASE: /
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: http://localhost:8081
+    depends_on:
+      - backend
+    networks:
+      - app_net
+
+volumes:
+  db_data:
+
+networks:
+  app_net:
+    driver: bridge
