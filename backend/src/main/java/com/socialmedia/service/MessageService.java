@@ -121,4 +121,19 @@ public class MessageService {
     public List<Message> getUnreadMessages(String userEmail) {
         return messageRepository.findUnreadMessages(userEmail);
     }
+
+    public boolean deleteMessageIfAuthor(String messageId, String userEmail) throws Exception {
+        Optional<Message> messageOptional = messageRepository.findById(Long.valueOf(messageId));
+        if (messageOptional.isEmpty()) {
+            return false;
+        }
+
+        Message message = messageOptional.get();
+        if (!message.getSenderEmail().equals(userEmail)) {
+            return false;
+        }
+
+        messageRepository.deleteById(Long.valueOf(messageId));
+        return true;
+    }
 }

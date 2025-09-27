@@ -75,4 +75,19 @@ public class MessageController {
             return ResponseEntity.badRequest().body("Error: " + e.getMessage());
         }
     }
+
+    @DeleteMapping("/{messageId}")
+    public ResponseEntity<?> deleteMessage(@PathVariable String messageId, 
+                                          Authentication authentication) {
+        try {
+            String userEmail = authentication.getName();
+            boolean deleted = messageService.deleteMessageIfAuthor(messageId, userEmail);
+            if (!deleted) {
+                return ResponseEntity.status(403).body("You can only delete your own messages");
+            }
+            return ResponseEntity.ok().body("{\"success\": true}");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
 }
